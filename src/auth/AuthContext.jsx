@@ -6,9 +6,19 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(sessionStorage.getItem("token"));
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    if (token) sessionStorage.setItem("token", token);
+    if (token) {
+      sessionStorage.setItem("token", token);
+      fetch(API + "/users/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then(setUser);
+    } else {
+      setUser(null);
+    }
   }, [token]);
 
   const register = async (credentials) => {
@@ -38,7 +48,7 @@ export function AuthProvider({ children }) {
     sessionStorage.removeItem("token");
   };
 
-  const value = { token, register, login, logout };
+  const value = { token, user, register, login, logout };
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
